@@ -17,8 +17,7 @@ CREATE TABLE IF NOT EXISTS attendance.attendances
     deleted_at              TIMESTAMP,
     deleted_by              VARCHAR(200),
     PRIMARY KEY(id),
-    CONSTRAINT fk_employee FOREIGN KEY (employee_id) REFERENCES auth.users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_shift FOREIGN KEY (shift_id) REFERENCES master.shift_details(id) ON DELETE CASCADE
+    CONSTRAINT fk_employee FOREIGN KEY (employee_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 COMMIT;
