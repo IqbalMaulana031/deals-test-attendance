@@ -28,9 +28,9 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// createRole(db)
-	// createAdmin(db)
-	// createEmployee(db, 5)
+	createRole(db)
+	createAdmin(db)
+	createEmployee(db, 100)
 	createShift(db)
 	createShiftDetail(db)
 }
