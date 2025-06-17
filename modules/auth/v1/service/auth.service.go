@@ -34,15 +34,13 @@ type AuthService struct {
 // AuthUseCase is a usecase for auth
 type AuthUseCase interface {
 	// AuthValidate is a function that validates the user
-	AuthValidate(ctx context.Context, email, password, roleName string) (*entity.User, error)
+	AuthValidate(ctx context.Context, username, password, roleName string) (*entity.User, error)
 	// AuthValidateAdmin is a function that validates the user
-	AuthValidateAdmin(ctx context.Context, email, password string) (*entity.User, error)
+	AuthValidateAdmin(ctx context.Context, username, password string) (*entity.User, error)
 	// GenerateAccessToken is a function that generates an access token
 	GenerateAccessToken(ctx context.Context, user *entity.User) (*entity.Token, error)
-	// GenerateAccessTokenCMS is a function that generates an access token
-	GenerateAccessTokenCMS(ctx context.Context, user *entity.User) (*entity.Token, error)
-	// Register is a function that registers a user
-	Register(ctx context.Context, user *entity.User, userRole *entity.UserRole) (*entity.User, error)
+	// GenerateAccessTokenAdmin is a function that generates an access token
+	GenerateAccessTokenAdmin(ctx context.Context, user *entity.User) (*entity.Token, error)
 	// Logout is a function that logs out the user
 	Logout(ctx context.Context, userID uuid.UUID, deviceID string, merchantID uuid.UUID) error
 }
@@ -65,27 +63,11 @@ func NewAuthService(
 }
 
 // AuthValidate is a function that validates the user
-func (as *AuthService) AuthValidate(ctx context.Context, email, password, roleName string) (*entity.User, error) {
-	userEmail, err := as.userFinderService.GetUserByEmail(ctx, email, roleName)
+func (as *AuthService) AuthValidate(ctx context.Context, username, password, roleName string) (*entity.User, error) {
+	user, err := as.userFinderService.GetUserByUsername(ctx, username, roleName)
 
 	if err != nil && err.Error() != errors.ErrRecordNotFound.Error().Error() {
 		return nil, err
-	}
-
-	user := userEmail
-
-	if userEmail == nil {
-		userUsername, err := as.userFinderService.GetUserByUsername(ctx, email, constant.RoleUser)
-
-		if err != nil && err.Error() != errors.ErrRecordNotFound.Error().Error() {
-			return nil, err
-		}
-
-		if userUsername == nil {
-			return nil, errors.ErrRecordNotFound.Error()
-		}
-
-		user = userUsername
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
@@ -99,26 +81,23 @@ func (as *AuthService) AuthValidate(ctx context.Context, email, password, roleNa
 
 // AuthValidateAdmin is a function that validates the user
 func (as *AuthService) AuthValidateAdmin(ctx context.Context, email, password string) (*entity.User, error) {
-	user, err := as.authRepo.GetUserByEmailAndUserType(ctx, email, constant.RoleAdmin)
+	admin, err := as.authRepo.GetUserByUsernameAndRole(ctx, email, constant.RoleAdmin)
 
 	if err != nil {
 		return nil, err
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	logger.Info(ctx, string(passwordHash))
-
-	if user == nil {
+	if admin == nil {
 		return nil, errors.ErrLoginNotFound.Error()
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password))
 
 	if err != nil {
 		return nil, errors.ErrLoginFailed.Error()
 	}
 
-	return user, nil
+	return admin, nil
 }
 
 // GenerateAccessToken is a function that generates an access token
@@ -143,7 +122,7 @@ func (as *AuthService) GenerateAccessToken(ctx context.Context, user *entity.Use
 		}
 	}
 
-	userRole, err := as.userFinderService.FindUserRoleByUserID(ctx, user.ID)
+	userRole, err := as.userFinderService.GetUserByID(ctx, user.ID)
 
 	if err != nil {
 		logger.Error(ctx, err)
@@ -157,9 +136,6 @@ func (as *AuthService) GenerateAccessToken(ctx context.Context, user *entity.Use
 	}
 
 	timeExp := time.Now().Add(time.Hour * constant.TwentyFourHour).Unix()
-	if user.Email == constant.EmailQA {
-		timeExp = time.Now().AddDate(1, 0, 0).Unix()
-	}
 
 	token, _, err := utils.JWTEncode(as.cfg, bodyJWT, as.cfg.JWTConfig.Issuer, timeExp)
 
@@ -176,8 +152,8 @@ func (as *AuthService) GenerateAccessToken(ctx context.Context, user *entity.Use
 	return result, nil
 }
 
-// GenerateAccessTokenCMS is a function that generates an access token
-func (as *AuthService) GenerateAccessTokenCMS(ctx context.Context, user *entity.User) (*entity.Token, error) {
+// GenerateAccessTokenAdmin is a function that generates an access token
+func (as *AuthService) GenerateAccessTokenAdmin(ctx context.Context, user *entity.User) (*entity.Token, error) {
 	result := &entity.Token{}
 
 	dataBytes, _ := as.cache.Get(fmt.Sprintf(commonCache.TokenUserByJTI, user.ID))
@@ -199,7 +175,7 @@ func (as *AuthService) GenerateAccessTokenCMS(ctx context.Context, user *entity.
 		}
 	}
 
-	userRole, err := as.userFinderService.FindUserRoleByUserID(ctx, user.ID)
+	userRole, err := as.userFinderService.GetUserByID(ctx, user.ID)
 
 	if err != nil {
 		logger.Error(ctx, err)
@@ -230,25 +206,11 @@ func (as *AuthService) GenerateAccessTokenCMS(ctx context.Context, user *entity.
 	return result, nil
 }
 
-// Register is a function that registers a user
-func (as *AuthService) Register(ctx context.Context, user *entity.User, userRole *entity.UserRole) (*entity.User, error) {
-	if err := as.authRepo.Register(ctx, user, userRole); err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
 // Logout is a function that logs out the user
 func (as *AuthService) Logout(ctx context.Context, userID uuid.UUID, deviceID string, merchantID uuid.UUID) error {
 	// Remove token from redis
 	if err := as.cache.BulkRemove(fmt.Sprintf(commonCache.TokenUserByJTI, userID)); err != nil {
 		logger.ErrorWithStr(ctx, "[AuthService - Logout] ", err)
 	}
-
-	if err := as.cache.BulkRemove(fmt.Sprintf(commonCache.UserFindByMerchantID, merchantID)); err != nil {
-		logger.ErrorWithStr(ctx, "[AuthService - Logout] ", err)
-	}
-
 	return nil
 }

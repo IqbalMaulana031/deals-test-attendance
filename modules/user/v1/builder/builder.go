@@ -29,10 +29,6 @@ var UserModule = fx.Options(
 			fx.As(new(repository.RoleRepositoryUseCase)),
 		),
 		fx.Annotate(
-			repository.NewUserRoleRepository,
-			fx.As(new(repository.UserRoleRepositoryUseCase)),
-		),
-		fx.Annotate(
 			service.NewUserCreator,
 			fx.As(new(service.UserCreatorUseCase)),
 		),

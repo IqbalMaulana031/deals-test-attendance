@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	prefix = "nuxatech-api"
+	prefix = "deals-api"
 	// UserRoleByUserID is a redis key for find cms user role by user id.
 	UserRoleByUserID = prefix + ":user-role:find-by-user-id:%v"
 	// // PermissionFindByName is a redis key for find cms permission by name.
@@ -35,6 +35,14 @@ const (
 	// RolePermissionFindByRoleID = prefix + ":role-permission:find-by-role-id:%v"
 	// UserByID is a redis key for find cms user by id.
 	UserByID = prefix + ":user:find-user-by-id:%v"
+	// ShiftByID is a redis key for find cms shift by id.
+	ShiftByID = prefix + ":shift:find-by-id:%v"
+	// ShiftAndDetailsByID is a redis key for find cms shift and details by id.
+	ShiftAndDetailsByID = prefix + ":shift:find-and-details-by-id:%v"
+	// shiftDetailByID is a redis key for find cms shift detail by id.
+	ShiftDetailByID = prefix + ":shift-detail:find-by-id:%v"
+	// AttendanceByID is a redis key for find attendance by id.
+	AttendanceByID = prefix + ":attendance:find-by-id:%v"
 
 	// // ProductCategoryFindAllTotal is a redis key for find all product category total.
 	// ProductCategoryFindAllTotal = prefix + ":product-category:find-all-total"
@@ -97,10 +105,10 @@ const (
 	// // PaymentChannelFindAll is a redis key for find all payment channel.
 	// PaymentChannelFindAll = prefix + ":payment-channel:find-all"
 	// UserFindByEmail is a redis key for find user by email.
-	UserFindByEmail = prefix + ":user:find-by-email:%v"
+	// UserFindByEmail = prefix + ":user:find-by-email:%v"
 
 	// UserExistsByEmail is a redis key for exists user by email.
-	UserExistsByEmail = prefix + ":user:exists-by-email:%v"
+	// UserExistsByEmail = prefix + ":user:exists-by-email:%v"
 	// UserFindByUSername is a redis key for find user by username.
 	UserFindByUSername = prefix + ":user:find-by-username:%v"
 	// // UserEmployeeFindByMerchantID is a redis key for find user employee by merchant id.
@@ -132,7 +140,7 @@ const (
 	// // InvoiceFindByTrxID is a redis key for find invoice by trx id.
 	// InvoiceFindByTrxID = prefix + ":invoice:find-by-trx-id:%v"
 	// UserFindByMerchantID is a redis key for find user by merchant id.
-	UserFindByMerchantID = prefix + ":user:find-by-merchant-id:%v"
+	// UserFindByMerchantID = prefix + ":user:find-by-merchant-id:%v"
 	// UserRoleFindByUserIDRoleID is a redis key for find user role by user id and role id.
 	UserRoleFindByUserIDRoleID = prefix + ":user-role:find-by-user-id:%v:%v"
 	// TokenUserByJTI is a redis key for find token user by jti.

@@ -28,3 +28,14 @@ func (uf *UserFinder) GetRoleByID(ctx context.Context, id uuid.UUID) (*entity.Ro
 
 	return role, nil
 }
+
+// GetRoles gets all roles
+func (uf *UserFinder) GetRoles(ctx context.Context, query, sort, order string, limit, offset int) ([]*entity.Role, error) {
+	roles, err := uf.roleRepo.FindAll(ctx, query, sort, order, limit, offset)
+
+	if err != nil {
+		return nil, errors.ErrInternalServerError.Error()
+	}
+
+	return roles, nil
+}

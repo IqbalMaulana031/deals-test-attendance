@@ -48,12 +48,6 @@ This folder contains all needed seeder for the database.
 
 ---
 
-### `deployment`
-
-This folder contains Kubernetes manifest related to deployment.
-
----
-
 ### `doc`
 
 This folder contains all documents related to the project.
@@ -123,12 +117,6 @@ Codes in this folder implement gRPC server interface.
 
 This folder contains codes that connect to the repository, such as database.
 Repository is not limited to databases. Anything that can be a repository can be put here.
-
----
-
-### `sdk`
-
-This folder contains related SDK needed for the project such as pub/sub and gcs.
 
 ---
 

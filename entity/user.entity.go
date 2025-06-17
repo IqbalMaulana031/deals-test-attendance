@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"starter-go-gin/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,10 +16,10 @@ const (
 type User struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
-	Email    string    `json:"email"`
 	Password string    `json:"password"`
-	UserRole *UserRole `foreignKey:"ID" associationForeignKey:"UserID"`
-	Gender   string    `json:"gender"`
+	Sallary  int       `json:"salary"`
+	RoleID   uuid.UUID `json:"role_id"`
+	Role     Role      `foreignKey:"ID" associationForeignKey:"RoleID" json:"role"`
 	Auditable
 }
 
@@ -31,9 +32,9 @@ func (model *User) TableName() string {
 func NewUser(
 	id uuid.UUID,
 	username string,
-	email string,
 	password string,
-	gender string,
+	Sallary int,
+	RoleID uuid.UUID,
 	createdBy string,
 ) *User {
 	if password != "" {
@@ -44,9 +45,9 @@ func NewUser(
 	return &User{
 		ID:        id,
 		Username:  username,
-		Email:     email,
 		Password:  password,
-		Gender:    gender,
+		Sallary:   Sallary,
+		RoleID:    RoleID,
 		Auditable: NewAuditable(createdBy),
 	}
 }
@@ -55,9 +56,11 @@ func NewUser(
 func (model *User) MapUpdateFrom(from *User) *map[string]interface{} {
 	if from == nil {
 		return &map[string]interface{}{
-			"username": model.Username,
-			"email":    model.Email,
-			"gender":   model.Gender,
+			"username":   model.Username,
+			"salary":     model.Sallary,
+			"role_id":    model.RoleID,
+			"updated_by": model.CreatedBy,
+			"updated_at": utils.AddSevenHours(time.Now()),
 		}
 	}
 
@@ -67,14 +70,14 @@ func (model *User) MapUpdateFrom(from *User) *map[string]interface{} {
 		mapped["username"] = from.Username
 	}
 
-	if model.Email != from.Email {
-		mapped["email"] = from.Email
+	if model.Sallary != from.Sallary {
+		mapped["salary"] = from.Sallary
 	}
 
-	if model.Gender != from.Gender {
-		mapped["Gender"] = from.Gender
+	if model.RoleID != from.RoleID {
+		mapped["role_id"] = from.RoleID
 	}
 
-	mapped["updated_at"] = time.Now()
+	mapped["updated_at"] = utils.AddSevenHours(time.Now())
 	return &mapped
 }

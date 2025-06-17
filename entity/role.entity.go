@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"starter-go-gin/utils"
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -10,10 +13,8 @@ const (
 
 // Role defines table role
 type Role struct {
-	ID    uuid.UUID `json:"id"`
-	Name  string    `json:"name"`
-	Label string    `json:"label"`
-	Type  string    `json:"type"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 	Auditable
 }
 
@@ -26,15 +27,11 @@ func (model *Role) TableName() string {
 func NewRole(
 	id uuid.UUID,
 	name string,
-	label string,
-	roleType string,
 	createdBy string,
 ) *Role {
 	return &Role{
 		ID:        id,
 		Name:      name,
-		Label:     label,
-		Type:      roleType,
 		Auditable: NewAuditable(createdBy),
 	}
 }
@@ -43,9 +40,9 @@ func NewRole(
 func (model *Role) MapUpdateFrom(from *Role) *map[string]interface{} {
 	if from == nil {
 		return &map[string]interface{}{
-			"name":  model.Name,
-			"label": model.Label,
-			"type":  model.Type,
+			"name":       model.Name,
+			"updated_by": model.CreatedBy,
+			"updated_at": model.UpdatedAt,
 		}
 	}
 
@@ -55,15 +52,6 @@ func (model *Role) MapUpdateFrom(from *Role) *map[string]interface{} {
 		mapped["name"] = from.Name
 	}
 
-	if model.Label != from.Label {
-		mapped["label"] = from.Label
-	}
-
-	if model.Type != from.Type {
-		mapped["type"] = from.Type
-	}
-
-	mapped["updated_at"] = from.UpdatedAt
-
+	mapped["updated_at"] = utils.AddSevenHours(time.Now())
 	return &mapped
 }

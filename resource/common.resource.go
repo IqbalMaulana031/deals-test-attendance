@@ -2,25 +2,11 @@ package resource
 
 // PaginationQueryParam is a pagination query param
 type PaginationQueryParam struct {
-	Query        string `form:"query" json:"query" binding:"max=1000"`
-	Sort         string `form:"sort" json:"sort" binding:"max=20"`
-	Order        string `form:"order" json:"order" binding:"max=20"`
-	Limit        int    `form:"limit,default=10" json:"limit" binding:"numeric,max=1000"`
-	Offset       int    `form:"offset,default=0" json:"offset" binding:"numeric,max=1000"`
-	Slug         string `form:"slug" json:"slug" binding:"max=50"`
-	Page         int    `form:"page,default=1" json:"page" binding:"numeric,max=1000"`
-	StartDate    string `form:"start_date" json:"start_date" binding:"omitempty,datetime=2006-01-02"`
-	EndDate      string `form:"end_date" json:"end_date" binding:"omitempty,datetime=2006-01-02"`
-	Type         string `form:"type" json:"type" binding:"max=20"`
-	CategoryID   string `form:"category_id" json:"category_id" binding:"omitempty,uuid4"`
-	IsFrequently bool   `form:"is_frequently" json:"is_frequently"`
-	Status       string `form:"status" json:"status"`
-	Stock        string `form:"stock" json:"stock"`
-	TypeMerchant string `form:"type_merchant" json:"type_merchant" binding:"max=20"`
-	TypeFAQ      string `form:"type_faq" json:"type_faq" binding:"max=20"`
-	PhoneNumber  string `form:"phone_number" json:"phone_number" binding:"max=20"`
-	Name         string `form:"name" json:"name" binding:"max=50"`
-	Payment      string `form:"payment" json:"payment" binding:"omitempty,max=20,oneof=cash my-pertamina"`
+	Query string `form:"query" json:"query" binding:"max=1000"`
+	Sort  string `form:"sort" json:"sort" binding:"max=20"`
+	Order string `form:"order" json:"order" binding:"max=20"`
+	Limit int    `form:"limit,default=10" json:"limit" binding:"numeric,max=1000"`
+	Page  int    `form:"page,default=1" json:"page" binding:"numeric,max=1000"`
 }
 
 // Meta is a meta response

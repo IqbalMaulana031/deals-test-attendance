@@ -37,8 +37,6 @@ type RoleRepositoryUseCase interface {
 	FindByName(ctx context.Context, slug string) (*entity.Role, error)
 	// Update update a role
 	Update(ctx context.Context, role *entity.Role) error
-	// FindByType finds a role by type
-	FindByType(ctx context.Context, roleType, query string) ([]*entity.Role, error)
 }
 
 // NewRoleRepository creates a new role repository
@@ -199,51 +197,9 @@ func (nc *RoleRepository) Update(ctx context.Context, role *entity.Role) error {
 		return err
 	}
 
-	if err := nc.cache.BulkRemove(fmt.Sprintf(commonCache.RoleFindByType, "*", "*")); err != nil {
-		return err
-	}
-
 	if err := nc.cache.BulkRemove(fmt.Sprintf(commonCache.UserRoleFindByRoleID, '*')); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// FindByType finds a role by type
-func (nc *RoleRepository) FindByType(ctx context.Context, roleType, query string) ([]*entity.Role, error) {
-	role := make([]*entity.Role, 0)
-
-	bytes, _ := nc.cache.Get(fmt.Sprintf(
-		commonCache.RoleFindByType,
-		roleType, query,
-	))
-
-	if bytes != nil {
-		if err := json.Unmarshal(bytes, &role); err != nil {
-			return nil, err
-		}
-		return role, nil
-	}
-
-	gormDB := nc.db.
-		WithContext(ctx).
-		Model(&entity.Role{}).
-		Where("type = ?", roleType)
-
-	if query != "" {
-		gormDB = gormDB.Where("name ILIKE ?", "%"+query+"%")
-	}
-
-	if err := gormDB.
-		Find(&role).
-		Error; err != nil {
-		return nil, errors.Wrap(err, "[RoleRepository-FindByType] error while getting role")
-	}
-
-	if err := nc.cache.Set(fmt.Sprintf(commonCache.RoleFindByType, roleType, query), &role, commonCache.OneWeek); err != nil {
-		return nil, err
-	}
-
-	return role, nil
 }

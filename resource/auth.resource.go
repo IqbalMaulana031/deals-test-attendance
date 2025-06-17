@@ -1,23 +1,5 @@
 package resource
 
-// ReminderChangePINResponse is a struct for reminder change pin response
-type ReminderChangePINResponse struct {
-	Redirect       string `json:"redirect"`
-	RefreshmentPIN bool   `json:"refreshment_pin"`
-}
-
-// ReminderChangePIN is a constructor for ReminderChangePIN
-type ReminderChangePIN struct {
-	UserID  string `json:"user_id"`
-	Expired string `json:"expired"`
-}
-
-// ValidateOTPEmailRequest is a request for ValidateOTPEmail
-type ValidateOTPEmailRequest struct {
-	Type string `json:"type" binding:"required"`
-	OTP  string `json:"otp" validate:"required,numeric,len=4"`
-}
-
 // RequestOTPNewEmailRequest is a constructor for RequestOTPNewEmailRequest
 type RequestOTPNewEmailRequest struct {
 	Email string `json:"email" binding:"required,email,max=50"`
@@ -46,13 +28,13 @@ type SSOPDSRequest struct {
 
 // LoginRequest is a struct for login request
 type LoginRequest struct {
-	UsernameOrEmail string `json:"username_or_email" form:"username_or_email" binding:"required,max=50"`
-	Password        string `json:"password" form:"password" binding:"required"`
+	Username string `json:"username" form:"username" binding:"required,max=50"`
+	Password string `json:"password" form:"password" binding:"required"`
 }
 
 // LoginRequestAdmin is a struct for login request
 type LoginRequestAdmin struct {
-	Email    string `json:"email" form:"email" binding:"required,max=50"`
+	Username string `json:"username" form:"username" binding:"required,max=50"`
 	Password string `json:"password" form:"password" binding:"required"`
 }
 

@@ -27,10 +27,6 @@ type UserRepository struct {
 
 // UserRepositoryUseCase is a use case for user
 type UserRepositoryUseCase interface {
-	// GetUserByEmail is a function to get user by email
-	GetUserByEmail(ctx context.Context, email, roleName string) (*entity.User, error)
-	// GetUserExistsByEmail is a function to get user exists by email
-	GetUserExistsByEmail(ctx context.Context, email string) ([]*entity.User, error)
 	// GetUserByID is a function to get user by id
 	GetUserByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	// Update is a function to update user
@@ -50,72 +46,6 @@ func NewUserRepository(db *gorm.DB, cache interfaces.Cacheable) *UserRepository 
 	return &UserRepository{db: db, cache: cache}
 }
 
-// GetUserByEmail is a function to get user by email
-func (ur *UserRepository) GetUserByEmail(ctx context.Context, email, roleName string) (*entity.User, error) {
-	result := &entity.User{}
-
-	bytes, _ := ur.cache.Get(fmt.Sprintf(commonCache.UserFindByEmail, email))
-
-	if bytes != nil {
-		if err := json.Unmarshal(bytes, &result); err != nil {
-			return nil, err
-		}
-		return result, nil
-	}
-
-	if err := ur.db.
-		WithContext(ctx).
-		Joins("inner join auth.user_roles on auth.users.id = auth.user_roles.user_id").
-		Joins("inner join auth.roles on auth.user_roles.role_id = auth.roles.id and auth.roles.name = ?", roleName).
-		Where("email = ?", email).
-		First(result).
-		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "[UserRepository-GetUserByEmail] email not found")
-	}
-
-	if err := ur.cache.Set(fmt.Sprintf(commonCache.UserFindByEmail, email), &result, commonCache.OneMonth); err != nil {
-		logger.Error(ctx, err)
-	}
-
-	return result, nil
-}
-
-// GetUserExistsByEmail is a function to get user exists by email
-func (ur *UserRepository) GetUserExistsByEmail(ctx context.Context, email string) ([]*entity.User, error) {
-	result := make([]*entity.User, 0)
-
-	bytes, _ := ur.cache.Get(fmt.Sprintf(commonCache.UserExistsByEmail, email))
-
-	if bytes != nil {
-		if err := json.Unmarshal(bytes, &result); err != nil {
-			return nil, err
-		}
-		return result, nil
-	}
-
-	if err := ur.db.
-		WithContext(ctx).
-		Preload("UserRole").
-		Preload("UserRole.Role").
-		Where("email = ?", email).
-		Find(&result).
-		Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "[UserRepository-UserExistsByEmail] email not found")
-	}
-
-	if err := ur.cache.Set(fmt.Sprintf(commonCache.UserExistsByEmail, email), &result, commonCache.OneMonth); err != nil {
-		logger.Error(ctx, err)
-	}
-
-	return result, nil
-}
-
 // GetUserByID is a function to get user by id
 func (ur *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	result := &entity.User{}
@@ -132,10 +62,7 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*entit
 
 	if err := ur.db.
 		WithContext(ctx).
-		Preload("UserRole").
-		Preload("UserRole.Role").
-		Preload("Merchant.DataTypeMerchant").
-		Preload("UserBank").
+		Preload("Role").
 		Where("id = ?", id).
 		First(result).
 		Error; err != nil {
@@ -179,10 +106,6 @@ func (ur *UserRepository) Update(ctx context.Context, user *entity.User) error {
 		return err
 	}
 
-	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserFindByEmail, user.Email)); err != nil {
-		return err
-	}
-
 	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserFindByUSername, user.Username)); err != nil {
 		return err
 	}
@@ -200,7 +123,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *entity.User) err
 		return errors.Wrap(err, "[UserRepository-CreateUser] error while creating user")
 	}
 
-	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserExistsByEmail, user.Email)); err != nil {
+	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserFindByUSername, user.Username)); err != nil {
 		return err
 	}
 
@@ -214,8 +137,8 @@ func (ur *UserRepository) GetUsers(ctx context.Context, query, sort, order strin
 	var gormDB = ur.db.
 		WithContext(ctx).
 		Model(&entity.User{}).
-		Joins("left join auth.user_roles on users.id = user_roles.user_id").
-		Where("auth.user_roles.user_id is null")
+		Joins("join auth.roles r on users.role_id = r.id").
+		Where(`r."name" = ?`, constant.EmployeeRoleName)
 
 	gormDB.Count(&total)
 
@@ -243,7 +166,7 @@ func (ur *UserRepository) GetUsers(ctx context.Context, query, sort, order strin
 		if err == gorm.ErrRecordNotFound {
 			return nil, 0, nil
 		}
-		return nil, 0, errors.Wrap(err, "[UserRepository-GetAdminUsers] error when looking up all user")
+		return nil, 0, errors.Wrap(err, "[UserRepository-GetUsers] error when looking up all user")
 	}
 
 	return user, total, nil
@@ -261,12 +184,12 @@ func (ur *UserRepository) GetUserByUsername(ctx context.Context, username, roleN
 		return user, nil
 	}
 
-	roleName = tools.EscapeSpecial(roleName)
 	if err := ur.db.WithContext(ctx).
-		Joins("inner join auth.user_roles on auth.users.id = auth.user_roles.user_id").
-		Joins("inner join auth.roles on auth.user_roles.role_id = auth.roles.id and auth.roles.name ilike ?", "%"+roleName+"%").
+		Joins("join auth.roles r on auth.users.role_id = r.id").
+		Where(`r."name" = ?`, constant.EmployeeRoleName).
 		Where(`username = ?`, username).
-		First(user).Error; err != nil {
+		First(&user).Error; err != nil {
+		fmt.Println(err)
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -290,10 +213,6 @@ func (ur *UserRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserByID, "*")); err != nil {
-		return err
-	}
-
-	if err := ur.cache.BulkRemove(fmt.Sprintf(commonCache.UserFindByEmail, "*")); err != nil {
 		return err
 	}
 

@@ -14,9 +14,10 @@ import (
 	"starter-go-gin/utils"
 	"time"
 
+	attendanceBuilder "starter-go-gin/modules/attendance/v1/builder"
 	authBuilder "starter-go-gin/modules/auth/v1/builder"
 	authHandler "starter-go-gin/modules/auth/v1/handler"
-	productBuilder "starter-go-gin/modules/product/v1/builder"
+	masterBuilder "starter-go-gin/modules/master/v1/builder"
 	userBuilder "starter-go-gin/modules/user/v1/builder"
 
 	"github.com/gin-gonic/gin"
@@ -139,7 +140,8 @@ func main() {
 		Module,
 		authBuilder.AuthModule,
 		userBuilder.UserModule,
-		productBuilder.ProductModule,
+		masterBuilder.MasterModule,
+		attendanceBuilder.AttendanceModule,
 		fx.Invoke(app.DefaultHTTPHandler),
 		fx.Invoke(startServer),
 	).Run()

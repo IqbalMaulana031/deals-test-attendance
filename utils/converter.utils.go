@@ -241,3 +241,7 @@ func FirstAndLastDateOfCurrentMonth() (string, string) {
 
 	return firstDay.Format("2006-01-02"), lastDay.Format("2006-01-02")
 }
+
+func AddSevenHours(t time.Time) time.Time {
+	return t.Add(7 * time.Hour)
+}

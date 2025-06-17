@@ -14,7 +14,6 @@ import (
 	"starter-go-gin/common/interfaces"
 	"starter-go-gin/common/logger"
 	"starter-go-gin/config"
-	"starter-go-gin/resource"
 	"starter-go-gin/response"
 	"starter-go-gin/utils"
 )
@@ -25,7 +24,7 @@ func Auth(cfg config.Config, cache interfaces.Cacheable) gin.HandlerFunc {
 		tokenString := strings.Split(c.Request.Header.Get("Authorization"), "Bearer ")
 
 		if len(tokenString) < constant.Two {
-			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponse(http.StatusUnauthorized, "unauthorized"))
+			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponseWithoutReqID(http.StatusUnauthorized, "unauthorized"))
 			c.Abort()
 			return
 		}
@@ -33,10 +32,7 @@ func Auth(cfg config.Config, cache interfaces.Cacheable) gin.HandlerFunc {
 		claims, err := utils.JWTDecode(cfg, tokenString[1])
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, response.SuccessAPIResponseList(http.StatusUnauthorized, err.Error(), &resource.ReminderChangePINResponse{
-				Redirect:       constant.RedirectForgotPINLogin,
-				RefreshmentPIN: false,
-			}))
+			c.JSON(http.StatusUnauthorized, response.SuccessAPIResponseWithoutReqID(http.StatusUnauthorized, err.Error(), nil))
 			c.Abort()
 			return
 		}
@@ -46,10 +42,7 @@ func Auth(cfg config.Config, cache interfaces.Cacheable) gin.HandlerFunc {
 				logger.Error(c.Request.Context(), err)
 			}
 
-			c.JSON(http.StatusUnauthorized, response.SuccessAPIResponseList(http.StatusUnauthorized, "token expired", &resource.ReminderChangePINResponse{
-				Redirect:       constant.RedirectLogin,
-				RefreshmentPIN: false,
-			}))
+			c.JSON(http.StatusUnauthorized, response.SuccessAPIResponseWithoutReqID(http.StatusUnauthorized, "token expired", nil))
 			c.Abort()
 			return
 		}
@@ -73,7 +66,7 @@ func Auth(cfg config.Config, cache interfaces.Cacheable) gin.HandlerFunc {
 
 		c.Request = reqNew
 		if claims.Issuer != cfg.JWTConfig.Issuer {
-			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponse(http.StatusUnauthorized, "unauthorized"))
+			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponseWithoutReqID(http.StatusUnauthorized, "unauthorized"))
 			c.Abort()
 			return
 		}
@@ -88,7 +81,7 @@ func Admin(cfg config.Config) gin.HandlerFunc {
 		tokenString := strings.Split(c.Request.Header.Get("Authorization"), "Bearer ")
 
 		if len(tokenString) < constant.Two {
-			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponse(http.StatusUnauthorized, "unauthorized"))
+			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponseWithoutReqID(http.StatusUnauthorized, "unauthorized"))
 			c.Abort()
 			return
 		}
@@ -96,7 +89,7 @@ func Admin(cfg config.Config) gin.HandlerFunc {
 		claims, err := utils.JWTDecode(cfg, tokenString[1])
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponse(http.StatusUnauthorized, err.Error()))
+			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponseWithoutReqID(http.StatusUnauthorized, err.Error()))
 			c.Abort()
 			return
 		}
@@ -121,7 +114,7 @@ func Admin(cfg config.Config) gin.HandlerFunc {
 		c.Request = reqNew
 
 		if claims.Issuer != cfg.JWTConfig.IssuerAdmin {
-			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponse(http.StatusUnauthorized, "unauthorized"))
+			c.JSON(http.StatusUnauthorized, response.ErrorAPIResponseWithoutReqID(http.StatusUnauthorized, "unauthorized"))
 			c.Abort()
 			return
 		}

@@ -34,3 +34,17 @@ func (uf *UserFinder) GetUserByID(ctx context.Context, id uuid.UUID) (*entity.Us
 
 	return user, nil
 }
+
+// GetUserByUsername gets user by phone number
+func (uf *UserFinder) GetUserByUsername(ctx context.Context, username, roleName string) (*entity.User, error) {
+	user, err := uf.userRepo.GetUserByUsername(ctx, username, roleName)
+
+	if err != nil {
+		return user, errors.ErrInternalServerError.Error()
+	}
+
+	if user == nil {
+		return nil, errors.ErrRecordNotFound.Error()
+	}
+	return user, nil
+}
